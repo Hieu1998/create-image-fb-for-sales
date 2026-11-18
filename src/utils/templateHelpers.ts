@@ -1,4 +1,11 @@
-import { FacebookRatio, RatioOption, TemplateId } from '../types';
+import {
+  FacebookRatio,
+  ImageAdjustments,
+  RatioOption,
+  TemplateId,
+  TextAlignOption,
+  TextFontFamily,
+} from '../types';
 
 export const RATIO_OPTIONS: RatioOption[] = [
   {
@@ -148,9 +155,101 @@ export function truncateText(text: string, maxChars: number): string {
 }
 
 /**
+ * Identifies headerless minimal "Ảnh + Zalo" templates
+ */
+export function isMinimalOnlyTemplate(templateId: TemplateId): boolean {
+  return (
+    templateId === 'minimal_consult' ||
+    templateId === 'minimal_luxe_gold' ||
+    templateId === 'minimal_silk_ivory' ||
+    templateId === 'minimal_diagonal_prism' ||
+    templateId === 'minimal_arch_editorial'
+  );
+}
+
+/**
+ * Returns responsive header/footer heights tailored per template & Facebook aspect ratio
+ */
+export function getTemplateLayoutConfig(
+  templateId: TemplateId,
+  ratio: FacebookRatio
+): { headerHeight: number; footerHeight: number; fullBleedMedia: boolean } {
+  const isStory = ratio === '9:16';
+  const isBanner = ratio === '16:9' || ratio === '1.91:1';
+
+  if (templateId === 'minimal_diagonal_prism') {
+    return {
+      headerHeight: 0,
+      footerHeight: 0,
+      fullBleedMedia: true,
+    };
+  }
+
+  if (isMinimalOnlyTemplate(templateId)) {
+    return {
+      headerHeight: 0,
+      footerHeight: isStory ? 132 : isBanner ? 92 : 112,
+      fullBleedMedia: false,
+    };
+  }
+
+  return {
+    headerHeight: isStory ? 230 : isBanner ? 135 : 160,
+    footerHeight: isStory ? 270 : isBanner ? 165 : 205,
+    fullBleedMedia: false,
+  };
+}
+
+/**
  * Validates template layout safety
  */
-export function isHorizontalLayout(ratio: FacebookRatio, templateId: TemplateId): boolean {
-  if (templateId === 'top_bottom_split') return false;
-  return ratio === '16:9' || ratio === '1.91:1' || ratio === '1:1' || ratio === '4:5';
+export function isHorizontalLayout(ratio: FacebookRatio, _templateId: TemplateId): boolean {
+  return ratio === '16:9' || ratio === '1.91:1' || ratio === '1:1' || ratio === '4:5' || ratio === '9:16';
+}
+
+/**
+ * Computes canvas X coordinate based on desired horizontal text alignment
+ */
+export function getAlignedTextX(
+  align: TextAlignOption | undefined,
+  canvasWidth: number,
+  paddingX: number
+): number {
+  if (align === 'center') return canvasWidth / 2;
+  if (align === 'right') return canvasWidth - paddingX;
+  return paddingX;
+}
+
+/**
+ * Maps font selection to offline-safe serif / sans-serif font stacks
+ */
+export function resolveFontFamily(
+  font: TextFontFamily | undefined,
+  fallback: TextFontFamily = 'sans'
+): string {
+  const chosen = font ?? fallback;
+  if (chosen === 'serif') {
+    return '"Playfair Display", "Times New Roman", Georgia, serif';
+  }
+  return 'Montserrat, "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+}
+
+/**
+ * Clamps scale and offsetX/offsetY adjustments safely within bounds
+ */
+export function clampImageAdjustments(
+  patch: Partial<ImageAdjustments>,
+  current: ImageAdjustments
+): ImageAdjustments {
+  const nextScale = patch.scale ?? current.scale;
+  const nextOffsetX = patch.offsetX ?? current.offsetX;
+  const nextOffsetY = patch.offsetY ?? current.offsetY;
+
+  return {
+    ...current,
+    ...patch,
+    scale: Math.min(2.5, Math.max(0.5, Number(nextScale.toFixed(2)))),
+    offsetX: Math.round(Math.min(400, Math.max(-400, nextOffsetX))),
+    offsetY: Math.round(Math.min(400, Math.max(-400, nextOffsetY))),
+  };
 }

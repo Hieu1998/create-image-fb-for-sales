@@ -13,10 +13,12 @@ import {
 import { TEMPLATES } from './data/templates';
 import { SAMPLE_LOGO, SAMPLE_BEFORE, SAMPLE_AFTER } from './data/presets';
 import { renderSurgeryComparisonCanvas } from './utils/canvasRenderer';
+import { clampImageAdjustments } from './utils/templateHelpers';
 import { TopBar } from './components/TopBar';
 import { UnifiedControlPanel } from './components/UnifiedControlPanel';
 import { InteractiveComparisonPreview } from './components/InteractiveComparisonPreview';
 import { ExportModal } from './components/ExportModal';
+import { FacebookCaptionModal } from './components/FacebookCaptionModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { Sparkles, Edit3 } from 'lucide-react';
 
@@ -42,16 +44,23 @@ const DEFAULT_IMAGE_ADJUSTMENTS: ImageAdjustments = {
 };
 
 const DEFAULT_BRANDING: BrandingData = {
-  brandName: 'BỆNH VIỆN ĐA KHOA HẢI VÂN - KHOA PHẪU THUẬT THẨM MỸ',
-  subTitle: 'UY TÍN · AN TOÀN · CHUẨN Y KHOA',
+  brandName: 'BỆNH VIỆN ĐA KHOA HẢI VÂN',
+  subTitle: 'KHOA PHẪU THUẬT THẨM MỸ',
   logoUrl: SAMPLE_LOGO,
   doctorName: 'ThS. BS CKII NGUYỄN VĂN HÙNG',
   doctorTitle: '15+ năm kinh nghiệm PTTM',
   serviceName: 'NÂNG MŨI CẤU TRÚC SURGIFORM S-LINE',
+  serviceSubtitle: '👨‍⚕️ Bác sĩ thực hiện: ThS. BS CKII NGUYỄN VĂN HÙNG · 15+ năm kinh nghiệm PTTM',
+  serviceFont: 'sans',
+  serviceAlign: 'left',
+  doctorFont: 'sans',
+  doctorAlign: 'left',
   beforeLabel: 'TRƯỚC PHẪU THUẬT',
   afterLabel: 'SAU 10 NGÀY CẮT CHỈ',
+  vsLabel: 'VS',
   hotline: '0988.123.456',
   hotlineLabel: 'TƯ VẤN / ZALO',
+  promoText: '⚡ TƯ VẤN 24/7 · NHẬN ƯU ĐÃI THÁNG NÀY',
   address: '128 Nguyễn Trãi, P. Bến Thành, Q.1, TP.HCM',
   website: 'benhvienhaivan.vn',
   fanpage: 'fb.com/benhvienhaivan',
@@ -71,12 +80,29 @@ export default function App() {
 
   const [beforeImgUrl, setBeforeImgUrl] = useState<string>(SAMPLE_BEFORE);
   const [afterImgUrl, setAfterImgUrl] = useState<string>(SAMPLE_AFTER);
+  const [beforeAdj, setBeforeAdj] = useState<ImageAdjustments>(DEFAULT_IMAGE_ADJUSTMENTS);
+  const [afterAdj, setAfterAdj] = useState<ImageAdjustments>(DEFAULT_IMAGE_ADJUSTMENTS);
 
   const [branding, setBranding] = useState<BrandingData>(() => {
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (saved) {
-        return { ...DEFAULT_BRANDING, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        const merged: BrandingData = { ...DEFAULT_BRANDING, ...parsed };
+        if (!('serviceSubtitle' in parsed) && parsed.doctorName) {
+          const docTitle = parsed.doctorTitle ? ` · ${parsed.doctorTitle}` : '';
+          merged.serviceSubtitle = `👨‍⚕️ Bác sĩ thực hiện: ${parsed.doctorName}${docTitle}`;
+        }
+        if (
+          typeof parsed.brandName === 'string' &&
+          parsed.brandName.includes(' - ') &&
+          parsed.subTitle === 'UY TÍN · AN TOÀN · CHUẨN Y KHOA'
+        ) {
+          const parts = parsed.brandName.split(/\s+-\s+/);
+          merged.brandName = parts[0].trim();
+          merged.subTitle = parts.slice(1).join(' - ').trim();
+        }
+        return merged;
       }
     } catch (e) {
       console.warn('LocalStorage error:', e);
@@ -86,9 +112,11 @@ export default function App() {
 
   const [savedNotification, setSavedNotification] = useState<boolean>(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
+  const [isCaptionModalOpen, setIsCaptionModalOpen] = useState<boolean>(false);
   const [previewDataUrl, setPreviewDataUrl] = useState<string>('');
   const [isRendering, setIsRendering] = useState<boolean>(false);
   const [mobileView, setMobileView] = useState<'preview' | 'edit'>('preview');
+  const [imagesVersion, setImagesVersion] = useState<number>(0);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const beforeImgRef = useRef<HTMLImageElement | null>(null);
@@ -123,13 +151,26 @@ export default function App() {
       beforeImgRef.current = beforeImg;
       afterImgRef.current = afterImg;
       logoImgRef.current = logoImg;
-      triggerCanvasRender();
+      setImagesVersion((v) => v + 1);
     });
 
     return () => {
       isCancelled = true;
     };
   }, [beforeImgUrl, afterImgUrl, branding.logoUrl, loadImage]);
+
+  // Auto-persist branding changes to localStorage (skip ephemeral blob URLs)
+  useEffect(() => {
+    try {
+      const toSave = {
+        ...branding,
+        logoUrl: branding.logoUrl.startsWith('blob:') ? SAMPLE_LOGO : branding.logoUrl,
+      };
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave));
+    } catch (e) {
+      console.warn('LocalStorage auto-save error:', e);
+    }
+  }, [branding]);
 
   const triggerCanvasRender = useCallback(() => {
     if (!canvasRef.current) return;
@@ -143,49 +184,107 @@ export default function App() {
         beforeImg: beforeImgRef.current,
         afterImg: afterImgRef.current,
         logoImg: logoImgRef.current,
-        beforeAdj: DEFAULT_IMAGE_ADJUSTMENTS,
-        afterAdj: DEFAULT_IMAGE_ADJUSTMENTS,
+        beforeAdj,
+        afterAdj,
         branding,
         scaleMultiplier: 1,
       });
 
-      try {
-        setPreviewDataUrl(canvasRef.current.toDataURL('image/png'));
-      } catch (e) {
-        console.warn('Canvas export preview warning:', e);
+      if (isExportModalOpen) {
+        try {
+          setPreviewDataUrl(canvasRef.current.toDataURL('image/png'));
+        } catch (e) {
+          console.warn('Canvas export preview warning:', e);
+        }
       }
     } finally {
       setIsRendering(false);
     }
-  }, [selectedRatio, selectedTemplate, branding]);
+  }, [selectedRatio, selectedTemplate, branding, beforeAdj, afterAdj, imagesVersion, mobileView, isExportModalOpen]);
 
   useEffect(() => {
     triggerCanvasRender();
   }, [triggerCanvasRender]);
 
+  const handleOpenExportModal = () => {
+    if (canvasRef.current) {
+      try {
+        renderSurgeryComparisonCanvas({
+          canvas: canvasRef.current,
+          ratio: selectedRatio,
+          template: selectedTemplate,
+          beforeImg: beforeImgRef.current,
+          afterImg: afterImgRef.current,
+          logoImg: logoImgRef.current,
+          beforeAdj,
+          afterAdj,
+          branding,
+          scaleMultiplier: 1,
+        });
+        setPreviewDataUrl(canvasRef.current.toDataURL('image/png'));
+      } catch (e) {
+        console.warn('Canvas export preview warning:', e);
+      }
+    }
+    setIsExportModalOpen(true);
+  };
+
+  const handleChangeBeforeAdj = useCallback((patch: Partial<ImageAdjustments>) => {
+    setBeforeAdj((prev) => clampImageAdjustments(patch, prev));
+  }, []);
+
+  const handleChangeAfterAdj = useCallback((patch: Partial<ImageAdjustments>) => {
+    setAfterAdj((prev) => clampImageAdjustments(patch, prev));
+  }, []);
+
+  const handleResetBeforeAdj = useCallback(() => {
+    setBeforeAdj(DEFAULT_IMAGE_ADJUSTMENTS);
+  }, []);
+
+  const handleResetAfterAdj = useCallback(() => {
+    setAfterAdj(DEFAULT_IMAGE_ADJUSTMENTS);
+  }, []);
+
   const handleUploadBefore = (file: File) => {
     const url = URL.createObjectURL(file);
     setBeforeImgUrl(url);
+    setBeforeAdj(DEFAULT_IMAGE_ADJUSTMENTS);
   };
 
   const handleUploadAfter = (file: File) => {
     const url = URL.createObjectURL(file);
     setAfterImgUrl(url);
+    setAfterAdj(DEFAULT_IMAGE_ADJUSTMENTS);
   };
 
   const handleUploadLogo = (file: File) => {
-    const url = URL.createObjectURL(file);
-    setBranding((prev) => ({ ...prev, logoUrl: url }));
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setBranding((prev) => ({ ...prev, logoUrl: reader.result as string }));
+      }
+    };
+    reader.onerror = () => {
+      const url = URL.createObjectURL(file);
+      setBranding((prev) => ({ ...prev, logoUrl: url }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSwapImages = () => {
     setBeforeImgUrl(afterImgUrl);
     setAfterImgUrl(beforeImgUrl);
+    setBeforeAdj(afterAdj);
+    setAfterAdj(beforeAdj);
   };
 
   const handleSaveBranding = () => {
     try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(branding));
+      const toSave = {
+        ...branding,
+        logoUrl: branding.logoUrl.startsWith('blob:') ? SAMPLE_LOGO : branding.logoUrl,
+      };
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave));
       setSavedNotification(true);
       setTimeout(() => setSavedNotification(false), 3000);
     } catch (e) {
@@ -207,8 +306,8 @@ export default function App() {
       beforeImg: beforeImgRef.current,
       afterImg: afterImgRef.current,
       logoImg: logoImgRef.current,
-      beforeAdj: DEFAULT_IMAGE_ADJUSTMENTS,
-      afterAdj: DEFAULT_IMAGE_ADJUSTMENTS,
+      beforeAdj,
+      afterAdj,
       branding,
       scaleMultiplier,
     });
@@ -221,7 +320,7 @@ export default function App() {
       {/* 1. Sticky Header + Mobile Switcher Bar */}
       <div className="sticky top-0 z-40">
         <TopBar
-          onOpenExport={() => setIsExportModalOpen(true)}
+          onOpenExport={handleOpenExportModal}
           selectedRatio={selectedRatio}
           onSelectRatio={setSelectedRatio}
         />
@@ -264,6 +363,12 @@ export default function App() {
           <UnifiedControlPanel
             beforeImgUrl={beforeImgUrl}
             afterImgUrl={afterImgUrl}
+            beforeAdj={beforeAdj}
+            afterAdj={afterAdj}
+            onChangeBeforeAdj={handleChangeBeforeAdj}
+            onChangeAfterAdj={handleChangeAfterAdj}
+            onResetBeforeAdj={handleResetBeforeAdj}
+            onResetAfterAdj={handleResetAfterAdj}
             onUploadBefore={handleUploadBefore}
             onUploadAfter={handleUploadAfter}
             onSwapImages={handleSwapImages}
@@ -272,6 +377,8 @@ export default function App() {
             onUploadLogo={handleUploadLogo}
             onSaveToLocalStorage={handleSaveBranding}
             savedNotification={savedNotification}
+            onGoToPreview={() => setMobileView('preview')}
+            onOpenCaptionAI={() => setIsCaptionModalOpen(true)}
           />
         </aside>
 
@@ -287,8 +394,15 @@ export default function App() {
             onSelectRatio={setSelectedRatio}
             template={selectedTemplate}
             onSelectTemplate={setSelectedTemplate}
-            onOpenExport={() => setIsExportModalOpen(true)}
+            onOpenExport={handleOpenExportModal}
+            onOpenCaptionAI={() => setIsCaptionModalOpen(true)}
             isRendering={isRendering}
+            beforeAdj={beforeAdj}
+            afterAdj={afterAdj}
+            onChangeBeforeAdj={handleChangeBeforeAdj}
+            onChangeAfterAdj={handleChangeAfterAdj}
+            onResetBeforeAdj={handleResetBeforeAdj}
+            onResetAfterAdj={handleResetAfterAdj}
           />
         </section>
       </main>
@@ -300,6 +414,17 @@ export default function App() {
         ratio={selectedRatio}
         onExport={handleExportHighRes}
         previewDataUrl={previewDataUrl}
+        onOpenCaptionAI={() => {
+          setIsExportModalOpen(false);
+          setIsCaptionModalOpen(true);
+        }}
+      />
+
+      {/* 4. AI Facebook Caption Generator Modal */}
+      <FacebookCaptionModal
+        isOpen={isCaptionModalOpen}
+        onClose={() => setIsCaptionModalOpen(false)}
+        branding={branding}
       />
 
       <OfflineIndicator />

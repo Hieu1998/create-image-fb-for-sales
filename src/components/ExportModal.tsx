@@ -19,6 +19,7 @@ interface ExportModalProps {
   ratio: FacebookRatio;
   onExport: (format: 'image/png' | 'image/jpeg', quality: number, scaleMultiplier: number) => Promise<string | null>;
   previewDataUrl: string;
+  onOpenCaptionAI?: () => void;
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
@@ -27,6 +28,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   ratio,
   onExport,
   previewDataUrl,
+  onOpenCaptionAI,
 }) => {
   const [format, setFormat] = useState<'image/png' | 'image/jpeg'>('image/png');
   const [scale, setScale] = useState<number>(2); // Default to 2x for crisp Retina export
@@ -238,6 +240,17 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 </>
               )}
             </button>
+
+            {onOpenCaptionAI && (
+              <button
+                type="button"
+                onClick={onOpenCaptionAI}
+                className="w-full py-2.5 px-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-amber-300 font-semibold text-xs flex items-center justify-center gap-2 transition"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Gợi Ý Caption Facebook Kèm Ảnh (AI)</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

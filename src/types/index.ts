@@ -11,15 +11,15 @@ export interface RatioOption {
 
 export type TemplateId =
   | 'luxury_gold'
-  | 'medical_blue'
-  | 'korean_minimal'
-  | 'noir_elegance'
   | 'diagonal_split'
-  | 'dual_circle'
-  | 'magazine_cover'
-  | 'clinical_record'
-  | 'soft_rose'
-  | 'top_bottom_split';
+  | 'minimal_consult'
+  | 'minimal_luxe_gold'
+  | 'minimal_silk_ivory'
+  | 'minimal_diagonal_prism'
+  | 'minimal_arch_editorial';
+
+export type TextFontFamily = 'sans' | 'serif';
+export type TextAlignOption = 'left' | 'center' | 'right';
 
 export interface TemplateDefinition {
   id: TemplateId;
@@ -60,10 +60,17 @@ export interface BrandingData {
   doctorName: string;
   doctorTitle: string;
   serviceName: string;
+  serviceSubtitle?: string;
+  serviceFont?: TextFontFamily;
+  serviceAlign?: TextAlignOption;
+  doctorFont?: TextFontFamily;
+  doctorAlign?: TextAlignOption;
   beforeLabel: string;
   afterLabel: string;
+  vsLabel?: string;
   hotline: string;
   hotlineLabel?: string;
+  promoText?: string;
   address: string;
   website: string;
   fanpage: string;
@@ -85,4 +92,30 @@ export interface SurgeryCasePreset {
   afterLabel: string;
   beforeImg: string;
   afterImg: string;
+}
+
+export type CaptionTone = 'medical_expert' | 'luxury_trust' | 'concise_inbox' | 'storytelling';
+
+export interface CaptionGenerateRequest {
+  serviceName: string;
+  serviceSubtitle?: string;
+  tone: CaptionTone;
+  extraNotes?: string;
+  includeClinicInfo: boolean;
+  clinicInfo?: {
+    brandName?: string;
+    doctorName?: string;
+    doctorTitle?: string;
+    hotline?: string;
+    hotlineLabel?: string;
+    address?: string;
+  };
+}
+
+export interface GeneratedCaptionItem {
+  id: string;
+  styleLabel: string;
+  hook: string;
+  body: string;
+  hashtags: string[];
 }
