@@ -1,8 +1,11 @@
 import { SurgeryCasePreset } from '../types';
+import sampleLogoImg from '../assets/images/aesthetic_clinic_luxury_logo_1794984631651.jpg';
+import sampleBeforeImg from '../assets/images/vietnamese_beauty_portrait_1_1794984631697.jpg';
+import sampleAfterImg from '../assets/images/vietnamese_beauty_portrait_2_1794984631652.jpg';
 
-export const SAMPLE_LOGO = '/src/assets/images/aesthetic_clinic_luxury_logo_1794984631651.jpg';
-export const SAMPLE_BEFORE = '/src/assets/images/vietnamese_beauty_portrait_1_1794984631697.jpg';
-export const SAMPLE_AFTER = '/src/assets/images/vietnamese_beauty_portrait_2_1794984631652.jpg';
+export const SAMPLE_LOGO = sampleLogoImg;
+export const SAMPLE_BEFORE = sampleBeforeImg;
+export const SAMPLE_AFTER = sampleAfterImg;
 
 export const SURGERY_PRESETS: SurgeryCasePreset[] = [
   {
