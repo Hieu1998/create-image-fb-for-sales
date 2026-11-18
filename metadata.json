@@ -1,0 +1,6 @@
+{
+  "name": "AuraAesthetic - Trình tạo ảnh Trước & Sau PTTM Facebook",
+  "description": "Công cụ thiết kế & xuất ảnh Trước - Sau phẫu thuật thẩm mỹ chuyên nghiệp chuẩn Facebook. Đa dạng template hiện đại, chỉnh sửa logo, bác sĩ, hotline, hiệu ứng da & che mắt bảo mật, hỗ trợ offline PWA.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
