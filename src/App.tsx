@@ -20,7 +20,7 @@ import { ExportModal } from './components/ExportModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { Sparkles, Edit3 } from 'lucide-react';
 
-const LOCAL_STORAGE_KEY = 'aura_aesthetic_branding_config_v2';
+const LOCAL_STORAGE_KEY = 'haivan_aesthetic_branding_config_v3';
 
 const DEFAULT_IMAGE_ADJUSTMENTS: ImageAdjustments = {
   scale: 1,
@@ -42,8 +42,8 @@ const DEFAULT_IMAGE_ADJUSTMENTS: ImageAdjustments = {
 };
 
 const DEFAULT_BRANDING: BrandingData = {
-  brandName: 'BỆNH VIỆN THẨM MỸ QUỐC TẾ AURA',
-  subTitle: 'VIỆN TẠO HÌNH THẨM MỸ CÔNG NGHỆ CAO',
+  brandName: 'BỆNH VIỆN ĐA KHOA HẢI VÂN - KHOA PHẪU THUẬT THẨM MỸ',
+  subTitle: 'UY TÍN · AN TOÀN · CHUẨN Y KHOA',
   logoUrl: SAMPLE_LOGO,
   doctorName: 'ThS. BS CKII NGUYỄN VĂN HÙNG',
   doctorTitle: '15+ năm kinh nghiệm PTTM',
@@ -53,13 +53,13 @@ const DEFAULT_BRANDING: BrandingData = {
   hotline: '0988.123.456',
   hotlineLabel: 'TƯ VẤN / ZALO',
   address: '128 Nguyễn Trãi, P. Bến Thành, Q.1, TP.HCM',
-  website: 'benhvienthammyaura.vn',
-  fanpage: 'fb.com/benhvienthammyaura',
+  website: 'benhvienhaivan.vn',
+  fanpage: 'fb.com/benhvienhaivan',
   showAddress: false,
   showSocial: false,
   showDoctor: true,
   showWatermark: true,
-  watermarkText: 'BẢN QUYỀN HÌNH ẢNH AURA HOSPITAL',
+  watermarkText: 'BẢN QUYỀN HÌNH ẢNH BV ĐA KHOA HẢI VÂN',
   trustBadge: 'CAM KẾT BẢO HÀNH TRỌN ĐỜI',
   accentColor: '#D4AF37',
   badgeStyle: 'modern_pill',
@@ -217,45 +217,47 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-slate-100 flex flex-col font-sans">
-      {/* 1. Header with Ratio Selector & Export */}
-      <TopBar
-        onOpenExport={() => setIsExportModalOpen(true)}
-        selectedRatio={selectedRatio}
-        onSelectRatio={setSelectedRatio}
-      />
+    <div className="min-h-[100dvh] bg-[#070b14] text-slate-100 flex flex-col font-sans overflow-x-hidden">
+      {/* 1. Sticky Header + Mobile Switcher Bar */}
+      <div className="sticky top-0 z-40">
+        <TopBar
+          onOpenExport={() => setIsExportModalOpen(true)}
+          selectedRatio={selectedRatio}
+          onSelectRatio={setSelectedRatio}
+        />
 
-      {/* Mobile Switcher Bar */}
-      <div className="lg:hidden flex items-center p-1.5 bg-slate-900 border-b border-slate-800 sticky top-[57px] z-30">
-        <button
-          onClick={() => setMobileView('preview')}
-          className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
-            mobileView === 'preview'
-              ? 'bg-amber-400 text-slate-950 shadow-sm'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Xem Ảnh & Đổi Mẫu</span>
-        </button>
-        <button
-          onClick={() => setMobileView('edit')}
-          className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
-            mobileView === 'edit'
-              ? 'bg-amber-400 text-slate-950 shadow-sm'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <Edit3 className="w-3.5 h-3.5" />
-          <span>Nhập Thông Tin & Tải Ảnh</span>
-        </button>
+        {/* Mobile Switcher Bar */}
+        <div className="lg:hidden flex items-center gap-1.5 p-1.5 bg-slate-900/95 backdrop-blur-md border-b border-slate-800">
+          <button
+            onClick={() => setMobileView('preview')}
+            className={`flex-1 py-2.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
+              mobileView === 'preview'
+                ? 'bg-amber-400 text-slate-950 shadow-sm'
+                : 'text-slate-300 hover:text-white bg-slate-950/40'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Xem Ảnh & Đổi Mẫu</span>
+          </button>
+          <button
+            onClick={() => setMobileView('edit')}
+            className={`flex-1 py-2.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
+              mobileView === 'edit'
+                ? 'bg-amber-400 text-slate-950 shadow-sm'
+                : 'text-slate-300 hover:text-white bg-slate-950/40'
+            }`}
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Nhập Thông Tin & Tải Ảnh</span>
+          </button>
+        </div>
       </div>
 
       {/* 2. Main Workspace Layout */}
-      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden max-w-[1600px] w-full mx-auto">
+      <main className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden max-w-[1600px] w-full mx-auto">
         {/* Left Side: Direct Unified Input Panel (Photos, Brand, Service, Hotline) */}
         <aside
-          className={`w-full lg:w-[440px] bg-slate-950/70 border-r border-slate-800 flex flex-col shrink-0 lg:max-h-[calc(100vh-65px)] overflow-y-auto ${
+          className={`w-full lg:w-[440px] bg-slate-950/70 lg:border-r border-slate-800 flex-col shrink-0 lg:max-h-[calc(100vh-65px)] overflow-y-auto pb-8 lg:pb-0 ${
             mobileView === 'edit' ? 'flex' : 'hidden lg:flex'
           }`}
         >
@@ -275,17 +277,16 @@ export default function App() {
 
         {/* Center / Right: Live Canvas Preview with Instant Template Selector underneath! */}
         <section
-          className={`flex-1 bg-gradient-to-b from-[#090d19] to-[#04060c] flex items-center justify-center relative min-h-[500px] ${
+          className={`flex-1 bg-gradient-to-b from-[#090d19] to-[#04060c] items-start lg:items-center justify-center relative pb-8 lg:pb-0 ${
             mobileView === 'preview' ? 'flex' : 'hidden lg:flex'
           }`}
         >
           <InteractiveComparisonPreview
             canvasRef={canvasRef}
             selectedRatio={selectedRatio}
+            onSelectRatio={setSelectedRatio}
             template={selectedTemplate}
             onSelectTemplate={setSelectedTemplate}
-            beforeImgUrl={beforeImgUrl}
-            afterImgUrl={afterImgUrl}
             onOpenExport={() => setIsExportModalOpen(true)}
             isRendering={isRendering}
           />

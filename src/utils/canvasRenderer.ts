@@ -484,6 +484,83 @@ export function renderSurgeryComparisonCanvas({
   ctx.save();
   const headerH = bounds.headerRect.height;
 
+  const drawCircularHeaderLogo = (
+    img: HTMLImageElement,
+    x: number,
+    y: number,
+    size: number,
+    ringColor: string,
+    ringWidth: number
+  ) => {
+    const cx = x + size / 2;
+    const cy = y + size / 2;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, size / 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.clip();
+
+    // Preserve aspect ratio with safe padding so wide/tall logos never distort or clip
+    const innerPad = size * 0.14;
+    const avail = size - innerPad * 2;
+    const imgAspect = img.naturalWidth / (img.naturalHeight || 1);
+    let drawW = avail;
+    let drawH = avail;
+    if (imgAspect > 1) {
+      drawH = avail / imgAspect;
+    } else {
+      drawW = avail * imgAspect;
+    }
+    ctx.drawImage(img, cx - drawW / 2, cy - drawH / 2, drawW, drawH);
+    ctx.restore();
+
+    ctx.lineWidth = ringWidth;
+    ctx.strokeStyle = ringColor;
+    ctx.beginPath();
+    ctx.arc(cx, cy, size / 2, 0, Math.PI * 2);
+    ctx.stroke();
+  };
+
+  const drawHeaderBrandText = (
+    rawName: string,
+    defaultSubtitle: string,
+    textStartX: number,
+    maxTextW: number,
+    mainFont: string,
+    subFont: string,
+    subColor: string,
+    useUppercase: boolean = false
+  ) => {
+    const cleanName = (rawName || 'BỆNH VIỆN ĐA KHOA HẢI VÂN - KHOA PHẪU THUẬT THẨM MỸ').trim();
+    const displayText = useUppercase ? cleanName.toUpperCase() : cleanName;
+    const dashSplit = displayText.split(/\s+-\s+/);
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    if (dashSplit.length >= 2) {
+      const primaryLine = dashSplit[0].trim();
+      const secondaryLine = dashSplit.slice(1).join(' - ').trim();
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = mainFont;
+      ctx.fillText(primaryLine, textStartX, headerH / 2 - 14, maxTextW);
+
+      ctx.fillStyle = subColor;
+      ctx.font = subFont;
+      ctx.fillText(secondaryLine, textStartX, headerH / 2 + 18, maxTextW);
+    } else {
+      ctx.fillStyle = subColor;
+      ctx.font = subFont;
+      ctx.fillText(defaultSubtitle, textStartX, headerH / 2 - 18, maxTextW);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = mainFont;
+      ctx.fillText(displayText, textStartX, headerH / 2 + 14, maxTextW);
+    }
+  };
+
   if (template.id === 'magazine_cover') {
     // EDITORIAL MAGAZINE MASTHEAD
     const magGrad = ctx.createLinearGradient(0, 0, 0, headerH);
@@ -492,15 +569,30 @@ export function renderSurgeryComparisonCanvas({
     ctx.fillStyle = magGrad;
     ctx.fillRect(0, 0, logicalW, headerH);
 
+    const rawMag = (branding.brandName || 'BỆNH VIỆN ĐA KHOA HẢI VÂN - KHOA PHẪU THUẬT THẨM MỸ').toUpperCase();
+    const magParts = rawMag.split(/\s+-\s+/);
+
+    if (logoImg) {
+      drawCircularHeaderLogo(logoImg, 45, (headerH - 64) / 2, 64, template.primaryColor, 2);
+    }
+
+    const centerAreaX = logoImg ? (logicalW + 64) / 2 : logicalW / 2;
+    const maxMagW = logoImg ? logicalW - 190 : logicalW - 90;
+
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 44px "Playfair Display", Georgia, serif';
+    ctx.font = 'bold 34px "Playfair Display", Georgia, serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText((branding.brandName || 'AURA BEAUTY').toUpperCase(), logicalW / 2, headerH / 2 - 12);
+    ctx.fillText(magParts[0], centerAreaX, headerH / 2 - 14, maxMagW);
 
     ctx.fillStyle = template.primaryColor;
-    ctx.font = '600 14px Montserrat, sans-serif';
-    ctx.fillText('EXCLUSIVE CLINICAL MAKEOVER · ISSUE 2026', logicalW / 2, headerH / 2 + 24);
+    ctx.font = 'bold 15px Montserrat, sans-serif';
+    ctx.fillText(
+      magParts.length >= 2 ? magParts.slice(1).join(' - ') : 'KHOA PHẪU THUẬT THẨM MỸ · CHUẨN Y KHOA',
+      centerAreaX,
+      headerH / 2 + 22,
+      maxMagW
+    );
 
     ctx.lineWidth = 1;
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
@@ -516,37 +608,15 @@ export function renderSurgeryComparisonCanvas({
     ctx.fillStyle = korGrad;
     ctx.fillRect(0, 0, logicalW, headerH);
 
-    const logoSize = 64;
+    const logoSize = 68;
     const logoX = 45;
     const logoY = (headerH - logoSize) / 2;
 
     if (logoImg) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
-      ctx.restore();
-
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = template.primaryColor;
-      ctx.beginPath();
-      ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
-      ctx.stroke();
+      drawCircularHeaderLogo(logoImg, logoX, logoY, logoSize, template.primaryColor, 2);
     }
 
-    const textStartX = logoImg ? logoX + logoSize + 22 : 45;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 30px "Plus Jakarta Sans", Montserrat, sans-serif';
-    ctx.fillText(branding.brandName || 'BỆNH VIỆN THẨM MỸ AURA', textStartX, headerH / 2 - 8);
-
-    ctx.fillStyle = template.primaryColor;
-    ctx.font = '500 14px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText('Gangnam Aesthetic Surgery & Medical Care', textStartX, headerH / 2 + 20);
-
+    let badgeRightEdge = logicalW - 45;
     if (branding.trustBadge) {
       ctx.font = 'bold 12px Montserrat, sans-serif';
       const bText = branding.trustBadge.toUpperCase();
@@ -554,6 +624,7 @@ export function renderSurgeryComparisonCanvas({
       const bH = 34;
       const bX = logicalW - bW - 45;
       const bY = headerH / 2 - bH / 2;
+      badgeRightEdge = bX - 20;
 
       ctx.fillStyle = 'rgba(226, 177, 166, 0.2)';
       ctx.strokeStyle = template.primaryColor;
@@ -565,8 +636,21 @@ export function renderSurgeryComparisonCanvas({
 
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       ctx.fillText(bText, bX + bW / 2, headerH / 2);
     }
+
+    const textStartX = logoImg ? logoX + logoSize + 22 : 45;
+    const maxTextW = Math.max(240, badgeRightEdge - textStartX);
+    drawHeaderBrandText(
+      branding.brandName,
+      'Gangnam Aesthetic Surgery & Medical Care',
+      textStartX,
+      maxTextW,
+      'bold 26px "Plus Jakarta Sans", Montserrat, sans-serif',
+      'bold 16px "Plus Jakarta Sans", Montserrat, sans-serif',
+      template.primaryColor
+    );
   } else if (template.id === 'medical_blue' || template.id === 'clinical_record') {
     // HOSPITAL CLINICAL BLUE HEADER
     const medGrad = ctx.createLinearGradient(0, 0, logicalW, headerH);
@@ -582,37 +666,15 @@ export function renderSurgeryComparisonCanvas({
     ctx.lineTo(logicalW, headerH);
     ctx.stroke();
 
-    const logoSize = 68;
+    const logoSize = 70;
     const logoX = 45;
     const logoY = (headerH - logoSize) / 2;
 
     if (logoImg) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
-      ctx.restore();
-
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = '#38BDF8';
-      ctx.beginPath();
-      ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
-      ctx.stroke();
+      drawCircularHeaderLogo(logoImg, logoX, logoY, logoSize, '#38BDF8', 2.5);
     }
 
-    const textStartX = logoImg ? logoX + logoSize + 22 : 45;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-
-    ctx.fillStyle = '#38BDF8';
-    ctx.font = 'bold 13px Montserrat, sans-serif';
-    ctx.fillText('CHUẨN Y KHOA QUỐC TẾ · AN TOÀN TUYỆT ĐỐI', textStartX, headerH / 2 - 18);
-
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 30px Montserrat, "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(branding.brandName || 'BỆNH VIỆN THẨM MỸ AURA', textStartX, headerH / 2 + 14);
-
+    let badgeRightEdge = logicalW - 45;
     if (branding.trustBadge) {
       const bText = `🛡️ ${branding.trustBadge.toUpperCase()}`;
       ctx.font = 'bold 13px Montserrat, sans-serif';
@@ -620,6 +682,7 @@ export function renderSurgeryComparisonCanvas({
       const bH = 38;
       const bX = logicalW - bW - 45;
       const bY = headerH / 2 - bH / 2;
+      badgeRightEdge = bX - 20;
 
       ctx.fillStyle = '#0284C7';
       ctx.beginPath();
@@ -628,8 +691,22 @@ export function renderSurgeryComparisonCanvas({
 
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       ctx.fillText(bText, bX + bW / 2, headerH / 2);
     }
+
+    const textStartX = logoImg ? logoX + logoSize + 22 : 45;
+    const maxTextW = Math.max(240, badgeRightEdge - textStartX);
+    drawHeaderBrandText(
+      branding.brandName,
+      'CHUẨN Y KHOA QUỐC TẾ · AN TOÀN TUYỆT ĐỐI',
+      textStartX,
+      maxTextW,
+      'bold 26px Montserrat, "Plus Jakarta Sans", sans-serif',
+      'bold 16px Montserrat, "Plus Jakarta Sans", sans-serif',
+      '#38BDF8',
+      true
+    );
   } else {
     // LUXURY GOLD & NOIR HEADER
     const goldGrad = ctx.createLinearGradient(0, 0, 0, headerH);
@@ -645,40 +722,22 @@ export function renderSurgeryComparisonCanvas({
     ctx.lineTo(logicalW, headerH);
     ctx.stroke();
 
-    const logoSize = 72;
+    const logoSize = 74;
     const logoX = 45;
     const logoY = (headerH - logoSize) / 2;
 
     if (logoImg) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
-      ctx.restore();
-
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = template.accentGold ? '#D4AF37' : template.primaryColor;
-      ctx.beginPath();
-      ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
-      ctx.stroke();
+      drawCircularHeaderLogo(
+        logoImg,
+        logoX,
+        logoY,
+        logoSize,
+        template.accentGold ? '#D4AF37' : template.primaryColor,
+        2.5
+      );
     }
 
-    const textStartX = logoImg ? logoX + logoSize + 24 : 45;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-
-    ctx.fillStyle = template.accentGold ? '#D4AF37' : template.secondaryColor;
-    ctx.font = '600 13px Montserrat, sans-serif';
-    ctx.fillText((branding.subTitle || 'VIỆN TẠO HÌNH THẨM MỸ QUỐC TẾ').toUpperCase(), textStartX, headerH / 2 - 18);
-
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font =
-      template.fontHeading === 'serif'
-        ? 'bold 32px "Playfair Display", Georgia, serif'
-        : 'bold 30px Montserrat, "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(branding.brandName || 'BỆNH VIỆN THẨM MỸ AURA', textStartX, headerH / 2 + 14);
-
+    let badgeRightEdge = logicalW - 45;
     if (branding.trustBadge) {
       const bText = branding.trustBadge.toUpperCase();
       ctx.font = 'bold 12px Montserrat, sans-serif';
@@ -686,6 +745,7 @@ export function renderSurgeryComparisonCanvas({
       const bH = 36;
       const bX = logicalW - bW - 45;
       const bY = headerH / 2 - bH / 2;
+      badgeRightEdge = bX - 20;
 
       ctx.fillStyle = 'rgba(212, 175, 55, 0.15)';
       ctx.strokeStyle = template.accentGold ? '#D4AF37' : template.primaryColor;
@@ -697,8 +757,26 @@ export function renderSurgeryComparisonCanvas({
 
       ctx.fillStyle = template.accentGold ? '#F3E5AB' : '#FFFFFF';
       ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       ctx.fillText(bText, bX + bW / 2, headerH / 2);
     }
+
+    const textStartX = logoImg ? logoX + logoSize + 24 : 45;
+    const maxTextW = Math.max(240, badgeRightEdge - textStartX);
+    const mainFont =
+      template.fontHeading === 'serif'
+        ? 'bold 27px "Playfair Display", Georgia, serif'
+        : 'bold 26px Montserrat, "Plus Jakarta Sans", sans-serif';
+    drawHeaderBrandText(
+      branding.brandName,
+      (branding.subTitle || 'UY TÍN · AN TOÀN · CHUẨN Y KHOA').toUpperCase(),
+      textStartX,
+      maxTextW,
+      mainFont,
+      'bold 16px Montserrat, "Plus Jakarta Sans", sans-serif',
+      template.accentGold ? '#D4AF37' : template.secondaryColor,
+      true
+    );
   }
   ctx.restore();
 

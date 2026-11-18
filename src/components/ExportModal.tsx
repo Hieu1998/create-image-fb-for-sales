@@ -47,7 +47,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       if (!dataUrl) return;
 
       const link = document.createElement('a');
-      link.download = `aura-phauthuat-thammy-${ratio.replace(':', '-')}-${exportW}x${exportH}.${
+      link.download = `haivan-phauthuat-thammy-${ratio.replace(':', '-')}-${exportW}x${exportH}.${
         format === 'image/png' ? 'png' : 'jpg'
       }`;
       link.href = dataUrl;
@@ -91,24 +91,24 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
-      <div className="w-full max-w-4xl max-h-[90vh] bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row text-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2.5 sm:p-4">
+      <div className="w-full max-w-4xl max-h-[92dvh] bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-y-auto md:overflow-hidden flex flex-col md:flex-row text-slate-200">
         {/* Left Side: High-res Preview Frame */}
-        <div className="flex-1 bg-slate-950 p-6 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-800 relative">
-          <div className="relative max-h-[500px] max-w-full rounded-xl overflow-hidden shadow-2xl border border-slate-800">
+        <div className="flex-1 bg-slate-950 p-4 sm:p-6 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-800 relative">
+          <div className="relative max-h-[250px] sm:max-h-[360px] md:max-h-[500px] max-w-full rounded-xl overflow-hidden shadow-2xl border border-slate-800">
             {previewDataUrl ? (
               <img
                 src={previewDataUrl}
                 alt="Bản xem trước xuất ảnh"
-                className="max-h-[460px] object-contain"
+                className="max-h-[240px] sm:max-h-[340px] md:max-h-[460px] object-contain"
               />
             ) : (
-              <div className="w-64 h-64 flex items-center justify-center text-slate-500">
+              <div className="w-48 h-48 sm:w-64 sm:h-64 flex items-center justify-center text-slate-500">
                 Đang tạo bản xem trước...
               </div>
             )}
           </div>
-          <div className="mt-3 text-xs text-slate-400 flex items-center gap-2">
+          <div className="mt-2.5 sm:mt-3 text-xs text-slate-400 flex items-center gap-2">
             <span>Độ phân giải xuất:</span>
             <span className="font-mono font-bold text-amber-400">
               {exportW} × {exportH} px
@@ -117,7 +117,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         </div>
 
         {/* Right Side: Export Settings & Actions */}
-        <div className="w-full md:w-96 p-6 flex flex-col justify-between space-y-5 bg-slate-900">
+        <div className="w-full md:w-96 p-4 sm:p-6 flex flex-col justify-between space-y-4 sm:space-y-5 bg-slate-900">
           <div className="space-y-5">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -211,7 +211,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="space-y-2 pt-3 border-t border-slate-800">
+          <div className="space-y-2 pt-3 pb-1 border-t border-slate-800 sticky bottom-0 bg-slate-900/95 backdrop-blur-sm md:static">
             <button
               onClick={handleDownload}
               disabled={isExporting}
